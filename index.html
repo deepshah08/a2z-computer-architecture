@@ -9,6 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" crossorigin="anonymous"
+          onload="if (typeof renderMathInElement === 'function') renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false});"></script>
 </head>
 <body>
 
@@ -75,7 +79,7 @@
     </header>
 
     <section class="chapter" id="pipeline-hazards">
-      <div class="ch-meta"><span class="ch-num">01</span><span class="ch-tag">Pipeline Hazards</span></div>
+      <div class="ch-meta"><span class="ch-num">01</span> <span class="ch-tag">Pipeline Hazards</span></div>
       <h3>Classic 5-Stage RISC Pipeline &amp; Data Forwarding</h3>
       <p>The classical RISC microprocessor breaks instruction execution into 5 discrete stages: <strong>Instruction Fetch (IF)</strong>, <strong>Instruction Decode / Register Read (ID)</strong>, <strong>Execute / Address Calculation (EX)</strong>, <strong>Memory Access (MEM)</strong>, and <strong>Write Back (WB)</strong>.</p>
       <p>Under a naive implementation, a Read-After-Write (RAW) data dependency (e.g. <code>ADD R1, R2, R3</code> followed immediately by <code>SUB R4, R1, R5</code>) forces the pipeline to insert 2 NOP bubbles (stall cycles) waiting for $R_1$ to reach the WB stage. Modern microarchitectures implement <strong>Data Forwarding (Bypassing)</strong>: multiplexers route the computed ALU result directly from the output of the EX or MEM stage back into the EX input of the dependent instruction, eliminating pipeline stalls completely!</p>
@@ -85,7 +89,7 @@
     </section>
 
     <section class="chapter" id="branch-prediction">
-      <div class="ch-meta"><span class="ch-num">02</span><span class="ch-tag">Branch Prediction</span></div>
+      <div class="ch-meta"><span class="ch-num">02</span> <span class="ch-tag">Branch Prediction</span></div>
       <h3>Dynamic Branch Prediction: 2-Bit Saturating Counters &amp; BTB</h3>
       <p>In deep pipelines (14 to 20 stages on modern Intel and AMD cores), conditional branches (<code>if/else</code>, <code>while</code>) pose a catastrophic latency hazard: waiting until the branch condition resolves in the EX stage would stall the processor for 15+ cycles on every branch!</p>
       <p>Microarchitectures employ <strong>Dynamic Branch Prediction</strong> with <strong>2-Bit Saturating Counters</strong>. The counter requires two consecutive mispredictions to flip its prediction (e.g. from <em>Strongly Taken</em> $\rightarrow$ <em>Weakly Taken</em> $\rightarrow$ <em>Weakly Not Taken</em>). This ensures that loop back-edges only mispredict once upon loop exit rather than thrashing the predictor state. When combined with a <strong>Branch Target Buffer (BTB)</strong>, instructions along the predicted path are fetched with zero stall cycles.</p>
@@ -95,7 +99,7 @@
     </section>
 
     <section class="chapter" id="tomasulo-ooo">
-      <div class="ch-meta"><span class="ch-num">03</span><span class="ch-tag">Out-of-Order (OoO)</span></div>
+      <div class="ch-meta"><span class="ch-num">03</span> <span class="ch-tag">Out-of-Order (OoO)</span></div>
       <h3>Out-of-Order Execution: Tomasulo's Algorithm &amp; Reorder Buffer (ROB)</h3>
       <p>To extract maximum performance from multi-issue superscalar cores, modern processors abandon in-order execution. <strong>Tomasulo's Algorithm</strong> dispatches instructions to <strong>Reservation Stations</strong> where they wait for their operands. When an operand becomes available, it is broadcast over the <strong>Common Data Bus (CDB)</strong>, allowing instructions to execute <em>out of program order</em> as soon as their data dependencies are satisfied.</p>
       <p>To maintain <strong>Precise Interrupts</strong> (the architectural illusion that instructions execute sequentially), results are written speculatively into a circular FIFO queue called the <strong>Reorder Buffer (ROB)</strong>. Instructions commit to permanent architectural registers strictly in original program order from the head of the ROB!</p>
@@ -105,7 +109,7 @@
     </section>
 
     <section class="chapter" id="simd-vectors">
-      <div class="ch-meta"><span class="ch-num">04</span><span class="ch-tag">SIMD Vectorization</span></div>
+      <div class="ch-meta"><span class="ch-num">04</span> <span class="ch-tag">SIMD Vectorization</span></div>
       <h3>SIMD Vector Execution: AVX-512 &amp; Vector Masking</h3>
       <p>While scalar execution units process one word per clock cycle, <strong>Single Instruction Multiple Data (SIMD)</strong> execution units pack multiple data elements into wide vector registers (e.g. 512-bit <code>ZMM</code> registers in AVX-512).</p>
       <p>A single 512-bit instruction can perform 16 parallel single-precision floating-point operations (or 32 with Fused Multiply-Add, FMA) in one clock cycle! AVX-512 introduced <strong>Vector Opmask Registers ($k_1\text{--}k_7$)</strong>: by applying bitmasks, conditional if/else code is executed vectorially without branch instructions, completely eliminating branch misprediction penalties.</p>
@@ -124,7 +128,7 @@
     </header>
 
     <section class="chapter" id="cache-geometry">
-      <div class="ch-meta"><span class="ch-num">05</span><span class="ch-tag">Cache Geometry</span></div>
+      <div class="ch-meta"><span class="ch-num">05</span> <span class="ch-tag">Cache Geometry</span></div>
       <h3>Cache Geometry: Tag / Index / Offset &amp; The 3 C's of Cache Misses</h3>
       <p>A CPU cache is organized into lines (almost universally 64 bytes). A virtual or physical memory address is divided into three bitfields:</p>
       <ul>
@@ -139,7 +143,7 @@
     </section>
 
     <section class="chapter" id="mesi-protocol">
-      <div class="ch-meta"><span class="ch-num">06</span><span class="ch-tag">Cache Coherence</span></div>
+      <div class="ch-meta"><span class="ch-num">06</span> <span class="ch-tag">Cache Coherence</span></div>
       <h3>The MESI Cache Coherence Protocol (M, E, S, I)</h3>
       <p>When multiple CPU cores maintain private L1 and L2 caches sharing the same physical address space, writes by one core would cause stale reads on other cores without a coherence protocol. The foundational snooping protocol is <strong>MESI</strong>:</p>
       <ul>
@@ -154,7 +158,7 @@
     </section>
 
     <section class="chapter" id="false-sharing">
-      <div class="ch-meta"><span class="ch-num">07</span><span class="ch-tag">False Sharing</span></div>
+      <div class="ch-meta"><span class="ch-num">07</span> <span class="ch-tag">False Sharing</span></div>
       <h3>Multithreading Concurrency Hazard: False Sharing &amp; Line Thrashing</h3>
       <p>A classic performance catastrophe in multi-threaded systems programming is <strong>False Sharing</strong>. It occurs when two threads running on different CPU cores modify completely independent variables (e.g. <code>counterA</code> and <code>counterB</code>) that happen to sit next to each other in memory within the <strong>same 64-byte cache line</strong>.</p>
       <p>Even though the threads never access each other's data, the MESI protocol sees writes to the same 64-byte unit. Every write by Core 0 broadcasts an invalidation, forcing Core 1 to dump its L1 cache and re-read the line across the interconnect! This ping-pong effect can degrade multi-core scalability by <strong>80% or more</strong>. Systems engineers fix this using 64-byte padding (<code>alignas(64)</code> in C++ or <code>@Contended</code> in Java).</p>
@@ -164,7 +168,7 @@
     </section>
 
     <section class="chapter" id="memory-ordering">
-      <div class="ch-meta"><span class="ch-num">08</span><span class="ch-tag">Memory Consistency</span></div>
+      <div class="ch-meta"><span class="ch-num">08</span> <span class="ch-tag">Memory Consistency</span></div>
       <h3>Memory Ordering Models: x86 TSO Store Buffers &amp; Memory Barriers</h3>
       <p>CPUs use <strong>Store Buffers</strong> to hold written values so execution can proceed without waiting for cache line ownership. Under the <strong>x86 Total Store Order (TSO)</strong> consistency model, writes to memory are globally ordered, but <strong>Store-Load Reordering</strong> can occur: a local read can execute before an earlier write from the same core has drained from the store buffer to L1 cache.</p>
       <p>This breaks classic lockless algorithms (such as Dekker's and Peterson's mutual exclusion algorithms): both cores can write their flag and read each other's flag as 0 simultaneously! Programmers must insert an explicit <strong>Memory Fence (<code>MFENCE</code> or <code>smp_mb()</code>)</strong> to force the store buffer to drain completely before subsequent loads execute.</p>
@@ -183,7 +187,7 @@
     </header>
 
     <section class="chapter" id="dram-timings">
-      <div class="ch-meta"><span class="ch-num">09</span><span class="ch-tag">DRAM Physics</span></div>
+      <div class="ch-meta"><span class="ch-num">09</span> <span class="ch-tag">DRAM Physics</span></div>
       <h3>DRAM Physics: Channels, Ranks, Banks, Rows &amp; CAS Latency</h3>
       <p>Main memory is organized hierarchically: Memory Controllers manage independent <strong>Channels</strong> connected to DIMM modules containing multiple <strong>Ranks</strong> and <strong>Banks</strong>. Each bank is an array of capacitive bit cells organized in Rows and Columns.</p>
       <p>Reading data requires activating an entire 8KB row into the bank's <strong>Sense Amplifiers (Row Buffer)</strong>. Timing constraints define real memory speed:</p>
@@ -197,7 +201,7 @@
     </section>
 
     <section class="chapter" id="numa-topology">
-      <div class="ch-meta"><span class="ch-num">10</span><span class="ch-tag">NUMA Interconnect</span></div>
+      <div class="ch-meta"><span class="ch-num">10</span> <span class="ch-tag">NUMA Interconnect</span></div>
       <h3>Non-Uniform Memory Access (NUMA): Socket Interconnect Latency Cliffs</h3>
       <p>In multi-socket enterprise servers, physical memory is partitioned across sockets in a <strong>Non-Uniform Memory Access (NUMA)</strong> topology. Each CPU socket contains its own integrated memory controller directly wired to dedicated DDR5 DIMMs.</p>
       <p>Accessing <strong>Local Memory</strong> takes $\approx 65\text{ ns}$ at full bus bandwidth. However, accessing <strong>Remote Memory</strong> attached to the opposite socket requires routing requests over high-speed point-to-point interconnects (Intel UPI or AMD Infinity Fabric), ballooning latency to <strong>130+ ns</strong> and cutting memory bandwidth in half! Systems engineers bind latency-sensitive workloads using <code>numactl --cpunodebind=0 --membind=0</code> to eliminate cross-socket hops.</p>
@@ -207,7 +211,7 @@
     </section>
 
     <section class="chapter" id="roofline-model">
-      <div class="ch-meta"><span class="ch-num">11</span><span class="ch-tag">Performance Modeling</span></div>
+      <div class="ch-meta"><span class="ch-num">11</span> <span class="ch-tag">Performance Modeling</span></div>
       <h3>The Roofline Model: Arithmetic Intensity &amp; The Memory Wall</h3>
       <p>Formulated by Samuel Williams and David Patterson at UC Berkeley, the <strong>Roofline Model</strong> provides a visual bound on algorithm performance based on <strong>Arithmetic Intensity (FLOPs / Byte)</strong>:</p>
       $$\text{Attained Performance} = \min\big(\text{Peak Compute}, \text{Arithmetic Intensity} \times \text{Peak Bandwidth}\big)$$
@@ -227,7 +231,7 @@
     </header>
 
     <section class="chapter" id="hardware-prefetch">
-      <div class="ch-meta"><span class="ch-num">12</span><span class="ch-tag">Hardware Prefetch</span></div>
+      <div class="ch-meta"><span class="ch-num">12</span> <span class="ch-tag">Hardware Prefetch</span></div>
       <h3>Hardware Prefetching: Stream &amp; Stride Detectors</h3>
       <p>To mask DRAM latency, modern CPUs contain dedicated <strong>Hardware Prefetchers</strong> in L1 and L2 caches. Prefetchers monitor memory access streams, detecting regular patterns:</p>
       <ul>
@@ -241,7 +245,7 @@
     </section>
 
     <section class="chapter" id="spectre-security">
-      <div class="ch-meta"><span class="ch-num">13</span><span class="ch-tag">Transient Execution</span></div>
+      <div class="ch-meta"><span class="ch-num">13</span> <span class="ch-tag">Transient Execution</span></div>
       <h3>Hardware Security: Spectre Variant 1 &amp; Transient Side-Channels</h3>
       <p>Discovered in 2018, <strong>Spectre (CVE-2017-5753)</strong> exposed a fundamental vulnerability in speculative execution. Consider bounds check code:</p>
       <pre><code>if (x &lt; array1_size) {
@@ -254,7 +258,7 @@
     </section>
 
     <section class="chapter" id="mmu-hugepages">
-      <div class="ch-meta"><span class="ch-num">14</span><span class="ch-tag">MMU Hardware</span></div>
+      <div class="ch-meta"><span class="ch-num">14</span> <span class="ch-tag">MMU Hardware</span></div>
       <h3>Hardware MMU &amp; HugePages: 4KB vs. 2MB / 1GB TLB Reach</h3>
       <p>On modern servers with 128GB to 1TB of RAM, standard 4KB pages severely constrain the <strong>TLB Reach</strong> (the total amount of virtual memory mapped by L1 TLB entries). With 64 L1 TLB entries, 4KB pages cover only $64 \times 4\text{KB} = 256\text{ KB}$ of memory!</p>
       <p>High-memory database and storage engines experience up to 30% execution time lost purely to MMU page table walks. By configuring <strong>2MB HugePages</strong>, the TLB reach expands $500\times$ to <strong>128 MB</strong> with zero code changes, bypassing the Page Table (PT) level and drastically improving memory latency.</p>
@@ -264,7 +268,7 @@
     </section>
 
     <section class="chapter" id="dvfs-power">
-      <div class="ch-meta"><span class="ch-num">15</span><span class="ch-tag">Power Architecture</span></div>
+      <div class="ch-meta"><span class="ch-num">15</span> <span class="ch-tag">Power Architecture</span></div>
       <h3>Energy-Efficient Computing: DVFS Dynamic Scaling &amp; C-States</h3>
       <p>Modern processors govern energy consumption through two complementary mechanisms:</p>
       <ul>
