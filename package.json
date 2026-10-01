@@ -1,0 +1,22 @@
+{
+  "name": "a2z-computer-architecture",
+  "version": "1.0.0",
+  "description": "Computer Architecture & Microarchitecture, Cycle by Cycle — An Explorable Architecture Guide to RISC Pipelines, Branch Predictors, Out-of-Order Tomasulo, MESI Coherence, NUMA, and Spectre",
+  "main": "index.html",
+  "scripts": {
+    "test": "node tests/audit-all-widgets.js"
+  },
+  "keywords": [
+    "computer-architecture",
+    "microarchitecture",
+    "mesi-cache-coherence",
+    "branch-prediction",
+    "pipeline-hazards",
+    "tomasulo",
+    "numa",
+    "spectre",
+    "explorable-explanation"
+  ],
+  "author": "Deep Shah",
+  "license": "MIT"
+}

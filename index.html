@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Computer Architecture &amp; Microarchitecture, Cycle by Cycle — An Explorable Architectural Guide</title>
+  <meta name="description" content="An interactive, visual field guide to CPU microarchitecture, pipelining, and cache hierarchies: from RISC hazard forwarding and branch prediction to MESI coherence, NUMA interconnects, and Spectre transient execution.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600..800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<header class="site-head">
+  <div class="brand">
+    <span class="badge">CURRICULUM</span>
+    <span class="title">Computer Architecture, Cycle by Cycle</span>
+  </div>
+  <button id="theme-toggle" class="theme-toggle" type="button" aria-label="Toggle theme">◐ Theme</button>
+</header>
+
+<section class="hero">
+  <div class="hero-text">
+    <p class="eyebrow">Interactive Systems Field Guide</p>
+    <h1>Computer Architecture &amp; Microarchitecture, Cycle by Cycle</h1>
+    <p class="lede">Synthesizing Hennessy &amp; Patterson (<em>Computer Architecture: A Quantitative Approach</em>), Bryant &amp; O'Hallaron (<em>CS:APP</em>), and Ulrich Drepper (<em>What Every Programmer Should Know About Memory</em>) into an explorable visual guide. From RISC 5-stage data hazards and 2-bit branch saturating counters to MESI snooping coherence protocols, multi-socket NUMA latency cliffs, Williams' Roofline model, and Spectre transient execution side-channels.</p>
+    <p class="hero-hint">↓ Scroll through the curriculum or test the live Memory Hierarchy Latency Wall Arena below.</p>
+  </div>
+  <figure class="viz viz-hero" data-viz="archHero">
+    <figcaption>Figure 00 — The Microarchitecture Latency Wall Arena: Compare access latencies across L1 Cache (1ns / 4 cycles), L2 Cache (3.5ns), L3 LLC (12ns), Main DRAM (65ns / 260 cycles), and NVMe Flash (10,000ns) normalized to human-perceptible timescales.</figcaption>
+  </figure>
+</section>
+
+<div class="layout">
+  <nav class="toc" aria-label="Table of contents">
+    <details class="toc-details" open>
+      <summary>Curriculum Index</summary>
+      <ol class="toc-list">
+        <li class="toc-part">Part I · Pipelining &amp; Branch Prediction</li>
+        <li><a href="#pipeline-hazards"><span class="toc-num">01</span><span>5-Stage RISC &amp; Data Forwarding</span></a></li>
+        <li><a href="#branch-prediction"><span class="toc-num">02</span><span>2-Bit Branch Counters &amp; BTB</span></a></li>
+        <li><a href="#tomasulo-ooo"><span class="toc-num">03</span><span>Tomasulo OoO &amp; Reorder Buffer</span></a></li>
+        <li><a href="#simd-vectors"><span class="toc-num">04</span><span>SIMD Vectors: AVX-512 &amp; Masks</span></a></li>
+
+        <li class="toc-part">Part II · Memory Hierarchy &amp; Coherence</li>
+        <li><a href="#cache-geometry"><span class="toc-num">05</span><span>Cache Geometry &amp; 3 C's Misses</span></a></li>
+        <li><a href="#mesi-protocol"><span class="toc-num">06</span><span>MESI Cache Coherence Protocol</span></a></li>
+        <li><a href="#false-sharing"><span class="toc-num">07</span><span>False Sharing &amp; Line Bouncing</span></a></li>
+        <li><a href="#memory-ordering"><span class="toc-num">08</span><span>x86 TSO &amp; Memory Fences</span></a></li>
+
+        <li class="toc-part">Part III · DRAM &amp; NUMA Interconnects</li>
+        <li><a href="#dram-timings"><span class="toc-num">09</span><span>DRAM Physics &amp; CAS Latencies</span></a></li>
+        <li><a href="#numa-topology"><span class="toc-num">10</span><span>NUMA Socket Interconnects</span></a></li>
+        <li><a href="#roofline-model"><span class="toc-num">11</span><span>The Roofline Model Ceilings</span></a></li>
+
+        <li class="toc-part">Part IV · Systems &amp; Hardware Security</li>
+        <li><a href="#hardware-prefetch"><span class="toc-num">12</span><span>Stream &amp; Stride Prefetchers</span></a></li>
+        <li><a href="#spectre-security"><span class="toc-num">13</span><span>Spectre Transient Side-Channel</span></a></li>
+        <li><a href="#mmu-hugepages"><span class="toc-num">14</span><span>MMU TLB Reach &amp; HugePages</span></a></li>
+        <li><a href="#dvfs-power"><span class="toc-num">15</span><span>DVFS Scaling &amp; C-States</span></a></li>
+      </ol>
+    </details>
+  </nav>
+
+  <main class="content">
+
+    <!-- ====================================================================
+         PART I: PIPELINING & BRANCH PREDICTION
+         ==================================================================== -->
+    <header class="part-header">
+      <span class="part-eyebrow">Part I</span>
+      <h2>Pipelining &amp; Branch Prediction</h2>
+      <p class="part-desc">How microprocessors achieve Instruction-Level Parallelism (ILP): classical 5-stage RISC hazards, saturating counter FSMs, Tomasulo out-of-order execution, and AVX-512 vector pipelines.</p>
+    </header>
+
+    <section class="chapter" id="pipeline-hazards">
+      <div class="ch-meta"><span class="ch-num">01</span><span class="ch-tag">Pipeline Hazards</span></div>
+      <h3>Classic 5-Stage RISC Pipeline &amp; Data Forwarding</h3>
+      <p>The classical RISC microprocessor breaks instruction execution into 5 discrete stages: <strong>Instruction Fetch (IF)</strong>, <strong>Instruction Decode / Register Read (ID)</strong>, <strong>Execute / Address Calculation (EX)</strong>, <strong>Memory Access (MEM)</strong>, and <strong>Write Back (WB)</strong>.</p>
+      <p>Under a naive implementation, a Read-After-Write (RAW) data dependency (e.g. <code>ADD R1, R2, R3</code> followed immediately by <code>SUB R4, R1, R5</code>) forces the pipeline to insert 2 NOP bubbles (stall cycles) waiting for $R_1$ to reach the WB stage. Modern microarchitectures implement <strong>Data Forwarding (Bypassing)</strong>: multiplexers route the computed ALU result directly from the output of the EX or MEM stage back into the EX input of the dependent instruction, eliminating pipeline stalls completely!</p>
+      <figure class="viz" data-viz="pipelineHazards">
+        <figcaption>Figure 01 — RISC 5-Stage Pipeline Simulator: Toggle hardware forwarding to contrast 2-cycle NOP stall bubbles against zero-stall bypassing.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="branch-prediction">
+      <div class="ch-meta"><span class="ch-num">02</span><span class="ch-tag">Branch Prediction</span></div>
+      <h3>Dynamic Branch Prediction: 2-Bit Saturating Counters &amp; BTB</h3>
+      <p>In deep pipelines (14 to 20 stages on modern Intel and AMD cores), conditional branches (<code>if/else</code>, <code>while</code>) pose a catastrophic latency hazard: waiting until the branch condition resolves in the EX stage would stall the processor for 15+ cycles on every branch!</p>
+      <p>Microarchitectures employ <strong>Dynamic Branch Prediction</strong> with <strong>2-Bit Saturating Counters</strong>. The counter requires two consecutive mispredictions to flip its prediction (e.g. from <em>Strongly Taken</em> $\rightarrow$ <em>Weakly Taken</em> $\rightarrow$ <em>Weakly Not Taken</em>). This ensures that loop back-edges only mispredict once upon loop exit rather than thrashing the predictor state. When combined with a <strong>Branch Target Buffer (BTB)</strong>, instructions along the predicted path are fetched with zero stall cycles.</p>
+      <figure class="viz" data-viz="branchPredictor">
+        <figcaption>Figure 02 — 2-Bit Saturating Counter FSM: Step through branch iterations, observe 4-state transitions (00, 01, 10, 11), and measure the 15-cycle misprediction flush penalty.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="tomasulo-ooo">
+      <div class="ch-meta"><span class="ch-num">03</span><span class="ch-tag">Out-of-Order (OoO)</span></div>
+      <h3>Out-of-Order Execution: Tomasulo's Algorithm &amp; Reorder Buffer (ROB)</h3>
+      <p>To extract maximum performance from multi-issue superscalar cores, modern processors abandon in-order execution. <strong>Tomasulo's Algorithm</strong> dispatches instructions to <strong>Reservation Stations</strong> where they wait for their operands. When an operand becomes available, it is broadcast over the <strong>Common Data Bus (CDB)</strong>, allowing instructions to execute <em>out of program order</em> as soon as their data dependencies are satisfied.</p>
+      <p>To maintain <strong>Precise Interrupts</strong> (the architectural illusion that instructions execute sequentially), results are written speculatively into a circular FIFO queue called the <strong>Reorder Buffer (ROB)</strong>. Instructions commit to permanent architectural registers strictly in original program order from the head of the ROB!</p>
+      <figure class="viz" data-viz="tomasuloRob">
+        <figcaption>Figure 03 — Tomasulo OoO &amp; ROB Commit Simulator: Watch instructions complete out of order, broadcast over the Common Data Bus, and commit in-order at the head of the ROB.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="simd-vectors">
+      <div class="ch-meta"><span class="ch-num">04</span><span class="ch-tag">SIMD Vectorization</span></div>
+      <h3>SIMD Vector Execution: AVX-512 &amp; Vector Masking</h3>
+      <p>While scalar execution units process one word per clock cycle, <strong>Single Instruction Multiple Data (SIMD)</strong> execution units pack multiple data elements into wide vector registers (e.g. 512-bit <code>ZMM</code> registers in AVX-512).</p>
+      <p>A single 512-bit instruction can perform 16 parallel single-precision floating-point operations (or 32 with Fused Multiply-Add, FMA) in one clock cycle! AVX-512 introduced <strong>Vector Opmask Registers ($k_1\text{--}k_7$)</strong>: by applying bitmasks, conditional if/else code is executed vectorially without branch instructions, completely eliminating branch misprediction penalties.</p>
+      <figure class="viz" data-viz="simdVectorUnits">
+        <figcaption>Figure 04 — SIMD Vector Acceleration Arena: Compare scalar throughput against 256-bit AVX2 and 512-bit AVX-512 vector pipelines with Fused Multiply-Add.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ====================================================================
+         PART II: MEMORY HIERARCHY & CACHE COHERENCE
+         ==================================================================== -->
+    <header class="part-header">
+      <span class="part-eyebrow">Part II</span>
+      <h2>Memory Hierarchy &amp; Cache Coherence</h2>
+      <p class="part-desc">How multi-core processors maintain consistent memory state: cache geometry indexing, the MESI snooping protocol, false sharing pitfalls, and x86 TSO memory barriers.</p>
+    </header>
+
+    <section class="chapter" id="cache-geometry">
+      <div class="ch-meta"><span class="ch-num">05</span><span class="ch-tag">Cache Geometry</span></div>
+      <h3>Cache Geometry: Tag / Index / Offset &amp; The 3 C's of Cache Misses</h3>
+      <p>A CPU cache is organized into lines (almost universally 64 bytes). A virtual or physical memory address is divided into three bitfields:</p>
+      <ul>
+        <li><strong>Offset (lowest 6 bits):</strong> Identifies the exact byte within the 64-byte line ($2^6 = 64$).</li>
+        <li><strong>Set Index (middle $s$ bits):</strong> Selects which set in the cache will store the line ($2^s = \text{number of sets}$).</li>
+        <li><strong>Tag (highest bits):</strong> Stored alongside data in the cache to verify that the cached line matches the requested memory address.</li>
+      </ul>
+      <p>Mark Hill and Alan Jay Smith established the <strong>3 C's Classification</strong> for cache misses: <strong>Compulsory (Cold)</strong> (unavoidable first touch), <strong>Capacity</strong> (working set exceeds total cache size), and <strong>Conflict</strong> (multiple addresses map to the exact same set index, mitigated by increasing associativity to 8-way or 16-way).</p>
+      <figure class="viz" data-viz="cacheMisses">
+        <figcaption>Figure 05 — Cache Address Slicing &amp; 3 C's Model: Inspect Tag, Set Index, and Offset bit ranges across direct-mapped vs 8-way set-associative cache geometries.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="mesi-protocol">
+      <div class="ch-meta"><span class="ch-num">06</span><span class="ch-tag">Cache Coherence</span></div>
+      <h3>The MESI Cache Coherence Protocol (M, E, S, I)</h3>
+      <p>When multiple CPU cores maintain private L1 and L2 caches sharing the same physical address space, writes by one core would cause stale reads on other cores without a coherence protocol. The foundational snooping protocol is <strong>MESI</strong>:</p>
+      <ul>
+        <li><strong>Modified (M):</strong> The cache line is present <em>only</em> in the current cache and is dirty (modified). Memory in L3/DRAM is stale. The core must flush before anyone else reads.</li>
+        <li><strong>Exclusive (E):</strong> The cache line is present <em>only</em> in this cache and is clean (matches memory). The core can write without broadcasting invalidations!</li>
+        <li><strong>Shared (S):</strong> The cache line may be present in multiple core caches and is clean. Writes require broadcasting an invalidation (<code>BusRdX</code>).</li>
+        <li><strong>Invalid (I):</strong> The cache line contains no valid data. Reads require fetching from peer caches or L3.</li>
+      </ul>
+      <figure class="viz" data-viz="mesiCoherence">
+        <figcaption>Figure 06 — MESI Coherence State Machine: Trace bus snooping events (BusRd, BusRdX) as Core 0 and Core 1 read and modify shared cache lines.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="false-sharing">
+      <div class="ch-meta"><span class="ch-num">07</span><span class="ch-tag">False Sharing</span></div>
+      <h3>Multithreading Concurrency Hazard: False Sharing &amp; Line Thrashing</h3>
+      <p>A classic performance catastrophe in multi-threaded systems programming is <strong>False Sharing</strong>. It occurs when two threads running on different CPU cores modify completely independent variables (e.g. <code>counterA</code> and <code>counterB</code>) that happen to sit next to each other in memory within the <strong>same 64-byte cache line</strong>.</p>
+      <p>Even though the threads never access each other's data, the MESI protocol sees writes to the same 64-byte unit. Every write by Core 0 broadcasts an invalidation, forcing Core 1 to dump its L1 cache and re-read the line across the interconnect! This ping-pong effect can degrade multi-core scalability by <strong>80% or more</strong>. Systems engineers fix this using 64-byte padding (<code>alignas(64)</code> in C++ or <code>@Contended</code> in Java).</p>
+      <figure class="viz" data-viz="falseSharing">
+        <figcaption>Figure 07 — False Sharing Thrashing Simulator: Watch unpadded variables trigger continuous MESI ping-pong invalidations, and eliminate contention via 64-byte padding.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="memory-ordering">
+      <div class="ch-meta"><span class="ch-num">08</span><span class="ch-tag">Memory Consistency</span></div>
+      <h3>Memory Ordering Models: x86 TSO Store Buffers &amp; Memory Barriers</h3>
+      <p>CPUs use <strong>Store Buffers</strong> to hold written values so execution can proceed without waiting for cache line ownership. Under the <strong>x86 Total Store Order (TSO)</strong> consistency model, writes to memory are globally ordered, but <strong>Store-Load Reordering</strong> can occur: a local read can execute before an earlier write from the same core has drained from the store buffer to L1 cache.</p>
+      <p>This breaks classic lockless algorithms (such as Dekker's and Peterson's mutual exclusion algorithms): both cores can write their flag and read each other's flag as 0 simultaneously! Programmers must insert an explicit <strong>Memory Fence (<code>MFENCE</code> or <code>smp_mb()</code>)</strong> to force the store buffer to drain completely before subsequent loads execute.</p>
+      <figure class="viz" data-viz="memoryOrdering">
+        <figcaption>Figure 08 — Memory Ordering &amp; MFENCE Barrier Lab: Simulate Dekker's algorithm race under x86 TSO store buffers and verify sequential consistency with memory fences.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ====================================================================
+         PART III: DRAM & NUMA INTERCONNECTS
+         ==================================================================== -->
+    <header class="part-header">
+      <span class="part-eyebrow">Part III</span>
+      <h2>DRAM &amp; NUMA Interconnects</h2>
+      <p class="part-desc">The physical constraints of main memory: DRAM bank row buffer hits, multi-socket NUMA interconnect latency cliffs, and Williams' Roofline model.</p>
+    </header>
+
+    <section class="chapter" id="dram-timings">
+      <div class="ch-meta"><span class="ch-num">09</span><span class="ch-tag">DRAM Physics</span></div>
+      <h3>DRAM Physics: Channels, Ranks, Banks, Rows &amp; CAS Latency</h3>
+      <p>Main memory is organized hierarchically: Memory Controllers manage independent <strong>Channels</strong> connected to DIMM modules containing multiple <strong>Ranks</strong> and <strong>Banks</strong>. Each bank is an array of capacitive bit cells organized in Rows and Columns.</p>
+      <p>Reading data requires activating an entire 8KB row into the bank's <strong>Sense Amplifiers (Row Buffer)</strong>. Timing constraints define real memory speed:</p>
+      <ul>
+        <li><strong>Row Buffer Hit ($t_{\text{CL}} \approx 14\text{ ns}$):</strong> The requested row is already open. Accessing the column takes only CAS Latency ($t_{\text{CL}}$).</li>
+        <li><strong>Row Conflict / Miss ($t_{\text{RP}} + t_{\text{RCD}} + t_{\text{CL}} \approx 52\text{ ns}$):</strong> Must precharge/close the active row ($t_{\text{RP}}$), activate the new row ($t_{\text{RCD}}$), and read the column ($t_{\text{CL}}$). Sequential array traversals maximize row buffer hits!</li>
+      </ul>
+      <figure class="viz" data-viz="dramTiming">
+        <figcaption>Figure 09 — DRAM Controller Timing Pipeline: Compare sub-15ns Row Buffer Hits against 50+ns Row Conflicts requiring Precharge and Activate cycles.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="numa-topology">
+      <div class="ch-meta"><span class="ch-num">10</span><span class="ch-tag">NUMA Interconnect</span></div>
+      <h3>Non-Uniform Memory Access (NUMA): Socket Interconnect Latency Cliffs</h3>
+      <p>In multi-socket enterprise servers, physical memory is partitioned across sockets in a <strong>Non-Uniform Memory Access (NUMA)</strong> topology. Each CPU socket contains its own integrated memory controller directly wired to dedicated DDR5 DIMMs.</p>
+      <p>Accessing <strong>Local Memory</strong> takes $\approx 65\text{ ns}$ at full bus bandwidth. However, accessing <strong>Remote Memory</strong> attached to the opposite socket requires routing requests over high-speed point-to-point interconnects (Intel UPI or AMD Infinity Fabric), ballooning latency to <strong>130+ ns</strong> and cutting memory bandwidth in half! Systems engineers bind latency-sensitive workloads using <code>numactl --cpunodebind=0 --membind=0</code> to eliminate cross-socket hops.</p>
+      <figure class="viz" data-viz="numaLatencyMap">
+        <figcaption>Figure 10 — Dual-Socket NUMA Latency Map: Trace local memory controller access vs cross-socket UPI interconnect hops and observe latency doubling.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="roofline-model">
+      <div class="ch-meta"><span class="ch-num">11</span><span class="ch-tag">Performance Modeling</span></div>
+      <h3>The Roofline Model: Arithmetic Intensity &amp; The Memory Wall</h3>
+      <p>Formulated by Samuel Williams and David Patterson at UC Berkeley, the <strong>Roofline Model</strong> provides a visual bound on algorithm performance based on <strong>Arithmetic Intensity (FLOPs / Byte)</strong>:</p>
+      $$\text{Attained Performance} = \min\big(\text{Peak Compute}, \text{Arithmetic Intensity} \times \text{Peak Bandwidth}\big)$$
+      <p>Algorithms with low arithmetic intensity (such as vector addition or sparse matrix math, $< 1\text{ FLOP/Byte}$) are strictly <strong>Memory-Bound</strong>: execution is bottlenecked by DRAM memory bus bandwidth, meaning code optimizations to instructions have zero impact. Algorithms with high intensity (dense matrix multiplication, $> 10\text{ FLOP/Byte}$) are <strong>Compute-Bound</strong> and saturate the ALU pipelines.</p>
+      <figure class="viz" data-viz="rooflineModel">
+        <figcaption>Figure 11 — Williams &amp; Patterson Roofline Model: Adjust arithmetic intensity slider to identify the crossover point from Memory-Bound to Compute-Bound execution regimes.</figcaption>
+      </figure>
+    </section>
+
+    <!-- ====================================================================
+         PART IV: SYSTEMS & HARDWARE SECURITY
+         ==================================================================== -->
+    <header class="part-header">
+      <span class="part-eyebrow">Part IV</span>
+      <h2>Systems &amp; Hardware Security</h2>
+      <p class="part-desc">Modern processor interactions with runtime software: hardware prefetchers, Spectre transient side-channels, MMU HugePages, and DVFS power scaling.</p>
+    </header>
+
+    <section class="chapter" id="hardware-prefetch">
+      <div class="ch-meta"><span class="ch-num">12</span><span class="ch-tag">Hardware Prefetch</span></div>
+      <h3>Hardware Prefetching: Stream &amp; Stride Detectors</h3>
+      <p>To mask DRAM latency, modern CPUs contain dedicated <strong>Hardware Prefetchers</strong> in L1 and L2 caches. Prefetchers monitor memory access streams, detecting regular patterns:</p>
+      <ul>
+        <li><strong>Stream Prefetcher:</strong> Detects sequential ascents or descents through memory lines, requesting future cache lines before the CPU demands them.</li>
+        <li><strong>Stride Prefetcher:</strong> Detects fixed step intervals (e.g. iterating every 4th element of an array, stride $+64\text{ bytes}$).</li>
+      </ul>
+      <p>This is the fundamental microarchitectural justification for flat array layouts (such as contiguous vectors or columnar storage) over linked node graphs (pointers): linear layouts trigger 95%+ prefetch hit rates, completely hiding memory latency!</p>
+      <figure class="viz" data-viz="prefetcherDynamics">
+        <figcaption>Figure 12 — Hardware Prefetcher Engine: Contrast stream prefetching across sequential arrays against prefetcher failure during random pointer-chasing traversals.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="spectre-security">
+      <div class="ch-meta"><span class="ch-num">13</span><span class="ch-tag">Transient Execution</span></div>
+      <h3>Hardware Security: Spectre Variant 1 &amp; Transient Side-Channels</h3>
+      <p>Discovered in 2018, <strong>Spectre (CVE-2017-5753)</strong> exposed a fundamental vulnerability in speculative execution. Consider bounds check code:</p>
+      <pre><code>if (x &lt; array1_size) {
+    y = array2[array1[x] * 512];
+}</code></pre>
+      <p>If the branch predictor is trained to believe the condition is true, passing an out-of-bounds index $x$ causes the CPU to <em>speculatively</em> read out-of-bounds secret data and use it to access <code>array2</code>. Even though the CPU eventually realizes the branch failed and squashes the instruction in the ROB, the speculative read left an echo: <code>array2[secret * 512]</code> is now cached in L1 data cache! By timing reads to <code>array2</code>, an attacker recovers secret memory across security boundaries.</p>
+      <figure class="viz" data-viz="spectreExploit">
+        <figcaption>Figure 13 — Spectre Variant 1 Exploit Simulator: Train the branch predictor, inject an out-of-bounds offset, observe speculative L1 cache warming, and remediate with LFENCE.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="mmu-hugepages">
+      <div class="ch-meta"><span class="ch-num">14</span><span class="ch-tag">MMU Hardware</span></div>
+      <h3>Hardware MMU &amp; HugePages: 4KB vs. 2MB / 1GB TLB Reach</h3>
+      <p>On modern servers with 128GB to 1TB of RAM, standard 4KB pages severely constrain the <strong>TLB Reach</strong> (the total amount of virtual memory mapped by L1 TLB entries). With 64 L1 TLB entries, 4KB pages cover only $64 \times 4\text{KB} = 256\text{ KB}$ of memory!</p>
+      <p>High-memory database and storage engines experience up to 30% execution time lost purely to MMU page table walks. By configuring <strong>2MB HugePages</strong>, the TLB reach expands $500\times$ to <strong>128 MB</strong> with zero code changes, bypassing the Page Table (PT) level and drastically improving memory latency.</p>
+      <figure class="viz" data-viz="mmuHugepages">
+        <figcaption>Figure 14 — MMU TLB Reach Scaling: Compare 256KB coverage under standard 4KB pages against 128MB reach under 2MB HugePages and 64GB under 1GB Gigantic Pages.</figcaption>
+      </figure>
+    </section>
+
+    <section class="chapter" id="dvfs-power">
+      <div class="ch-meta"><span class="ch-num">15</span><span class="ch-tag">Power Architecture</span></div>
+      <h3>Energy-Efficient Computing: DVFS Dynamic Scaling &amp; C-States</h3>
+      <p>Modern processors govern energy consumption through two complementary mechanisms:</p>
+      <ul>
+        <li><strong>P-States (Performance): Dynamic Voltage and Frequency Scaling (DVFS).</strong> Dynamic power is proportional to $P = C \cdot V^2 \cdot f$. Because voltage scales with frequency, dropping clock speed yields quadratic power savings!</li>
+        <li><strong>C-States (Core Sleep States):</strong> When a core has no runnable tasks, it transitions from active execution ($C_0$) through progressively deeper idle states ($C_1$ to $C_6$). In $C_6$, the core is power-gated (0V) and its L1/L2 caches flushed, taking $\approx 40\text{ }\mu\text{s}$ to wake.</li>
+      </ul>
+      <figure class="viz" data-viz="dvfsPowerStates">
+        <figcaption>Figure 15 — DVFS Power &amp; C-State Simulator: Modulate processor performance P-states, trigger C6 deep-sleep power gating, and observe dynamic TDP scaling.</figcaption>
+      </figure>
+    </section>
+
+  </main>
+</div>
+
+<footer class="site-foot">
+  <p><strong>Computer Architecture &amp; Microarchitecture, Cycle by Cycle</strong> — An open-source interactive architectural guide.</p>
+  <p>Curricular sources: John L. Hennessy &amp; David A. Patterson (<em>Computer Architecture: A Quantitative Approach</em>), Randal E. Bryant &amp; David R. O'Hallaron (<em>CS:APP</em>), Ulrich Drepper (<em>What Every Programmer Should Know About Memory</em>).</p>
+</footer>
+
+<script src="assets/core.js"></script>
+<script src="assets/viz-pipeline-branching.js"></script>
+<script src="assets/viz-cache-coherence.js"></script>
+<script src="assets/viz-numa-hardware-security.js"></script>
+<script>
+  window.addEventListener('DOMContentLoaded', () => {
+    if (window.OS && window.OS.boot) {
+      window.OS.boot();
+    }
+  });
+</script>
+</body>
+</html>
