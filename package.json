@@ -4,7 +4,9 @@
   "description": "Computer Architecture & Microarchitecture, Cycle by Cycle — An Explorable Architecture Guide to RISC Pipelines, Branch Predictors, Out-of-Order Tomasulo, MESI Coherence, NUMA, and Spectre",
   "main": "index.html",
   "scripts": {
-    "test": "node tests/audit-all-widgets.js"
+    "test": "node tests/audit-all-widgets.js && python3 tests/e2e-browser-audit.py",
+    "test:unit": "node tests/audit-all-widgets.js",
+    "test:e2e": "python3 tests/e2e-browser-audit.py"
   },
   "keywords": [
     "computer-architecture",
